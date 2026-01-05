@@ -25,18 +25,25 @@ def log(msg: str):
         pass
 
 def open_with_fallback(path):
-    """Open bestand met UTF-8, val terug op Windows-1252."""
-    try:
-        f = open(path, newline='', encoding='utf-8-sig')
-        f.readline()
-        f.seek(0)
-        return f
-    except UnicodeDecodeError:
+    """Open bestand met UTF-8, val terug op andere encodings."""
+    encodings = ['utf-8-sig', 'utf-8', 'iso-8859-1', 'cp1252', 'latin-1']
+
+    for encoding in encodings:
         try:
-            f.close()
-        except Exception:
-            pass
-        return open(path, newline='', encoding='cp1252')
+            f = open(path, newline='', encoding=encoding)
+            # Test of we het hele bestand kunnen lezen
+            f.read()
+            f.seek(0)
+            return f
+        except (UnicodeDecodeError, UnicodeError):
+            try:
+                f.close()
+            except Exception:
+                pass
+            continue
+
+    # Als laatste poging: open met errors='replace'
+    return open(path, newline='', encoding='utf-8', errors='replace')
 
 _ws_re = re.compile(r'\s+', flags=re.UNICODE)
 _dash_space_re = re.compile(r'\s*-\s*')
@@ -68,7 +75,7 @@ def validate_csv_structure(path):
 def convert_rabobank_csv(input_file, output_file):
     """Converteer Rabobank CSV naar 3 kolommen: Datum, Bedrag, Omschrijving."""
     infile = open_with_fallback(input_file)
-    with infile, open(output_file, 'w', newline='', encoding='utf-8') as outfile:
+    with infile, open(output_file, 'w', newline='', encoding='utf-8-sig') as outfile:
         reader = csv.DictReader(infile, delimiter=',', quotechar='"')
         writer = csv.writer(outfile)
 
