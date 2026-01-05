@@ -29,4 +29,8 @@ launchctl stop nl.user.bankconverter
 ps aux | grep BankConverter
 
 tail -f ~/BankConverter/log.txt
+
+# remove
+launchctl unload ~/Library/LaunchAgents/nl.user.bankconverter.plist
+rm ~/Library/LaunchAgents/nl.user.bankconverter.plist
 ```
